@@ -30,10 +30,25 @@ struct RecentPolicy {
 
 // --- Trie parametrizado por la Política ------------------------------------
 template <typename PriorityPolicy>
+
+/**
+ * @class Trie
+ * @brief Estructura Trie genérica que soporta políticas de prioridad parametrizables.
+ *
+ * @tparam PriorityPolicy Define cómo se calcula y actualiza la prioridad
+ * (por frecuencia o por recencia).
+ */
 class Trie {
 public:
     using Counter = typename PriorityPolicy::Counter;
 
+    /**
+    * @struct Node
+    * @brief Representa un nodo del Trie.
+    *
+    * Contiene punteros a hijos, un puntero al nodo padre, información sobre si es
+    * terminal y metadatos para determinar el mejor autocompletado dentro del subárbol.
+    */
     struct Node {
         Node* parent = nullptr;
         // Σ = 27: 'a'..'z' y '$' como fin de palabra
@@ -53,7 +68,11 @@ public:
 
     ~Trie() { clear(root_); }
 
-    // Inserta w carácter a carácter
+    /**
+    * Inserta una palabra en el trie carácter a carácter.
+    * @param w: palabra a insertar.
+    * Complejidad: O(|w|).
+    */
     void insert(const std::string& w) {
         Node* v = root_;
         for (char ch : w) {
@@ -87,7 +106,12 @@ public:
 
     }
 
-    // Retorna puntero al nodo tras descender por c desde v (o nullptr si no existe)
+    /**
+     * @brief Desciende desde un nodo dado según un carácter.
+     * @param v Nodo actual desde el cual se quiere descender.
+     * @param c Carácter por el cual se desciende.
+     * @return Puntero al hijo correspondiente o nullptr si no existe.
+     */
     Node* descend(Node* v, char c) const {
         if (!v) return nullptr;
         int idx = (c == '$') ? end_index() : char_to_index(c);
@@ -95,22 +119,38 @@ public:
         return v->next[idx];
     }
 
+    /**
+     * @brief Retorna el mejor nodo terminal (de mayor prioridad) dentro del subárbol de v.
+     * @param v Nodo desde el cual se busca el autocompletado.
+     * @return Puntero al nodo terminal sugerido o nullptr si no existe.
+     */
     Node* autocomplete(Node* v) const {
         if (!v) return nullptr;
         return v->best_terminal;
     }
 
-    // Actualiza prioridad de un nodo terminal y propaga best_* hacia la raíz
+    /**
+     * @brief Actualiza la prioridad de un nodo terminal y propaga la actualización hacia la raíz.
+     * @param terminal Nodo terminal cuya prioridad se actualiza.
+     * @details En la política de frecuencia, incrementa el contador;
+     * en la de recencia, asigna un timestamp creciente.
+     */
     void update_priority(Node* terminal) {
         assert(terminal && terminal->is_terminal);
         PriorityPolicy::touch(terminal->priority, global_access_counter_);
         bubble_up(terminal);
     }
 
-    // Raíz
+    /**
+     * @brief Retorna el nodo raíz del Trie.
+     * @return Puntero al nodo raíz.
+     */
     Node* root() const { return root_; }
 
-    // Cantidad de nodos (para medición de memoria pedida)
+    /**
+     * @brief Retorna el número total de nodos actualmente en el Trie.
+     * @return Cantidad de nodos.
+     */
     size_t node_count() const { return node_count_; }
 
     // Utilidad: desciende por un string prefijo (sin forzar '$')
@@ -141,7 +181,11 @@ private:
         return -1;
     }
 
-    // Recalcula best_* de un nodo no necesariamente terminal
+    /**
+     * @brief Recalcula el mejor nodo terminal de un subárbol.
+     * @param v Nodo desde el cual se propaga la actualización.
+     * @details Se usa tras cada inserción o cambio de prioridad.
+     */
     static void recompute_best(Node* v) {
         // Mejor candidato: él mismo si terminal
         Node* best = (v->is_terminal ? v : nullptr);
@@ -159,7 +203,10 @@ private:
         v->best_priority = bestp;
     }
 
-    // Sube actualizando best_* hasta que no mejore
+    /**
+     * @brief Propaga hacia arriba la actualización de prioridades.
+     * @param from Nodo desde el cual se comienza a actualizar.
+     */
     static void bubble_up(Node* from) {
         Node* v = from;
         while (v) {

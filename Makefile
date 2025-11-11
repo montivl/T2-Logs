@@ -1,16 +1,33 @@
-CXX := g++
-CXXFLAGS := -std=gnu++17 -O2 -Wall -Wextra -pedantic -Iinclude
+CXX = g++
+CXXFLAGS = -std=c++17 -O3 -Wall -Wextra -Iinclude
 
-all: test_recent test_frequency test_extra
+# Ejecutable principal
+TARGET = experimentos
 
-test_recent: tests/test_recent.cpp
-	$(CXX) $(CXXFLAGS) $^ -o $@
+# Directorios
+SRC_DIR = src
+INC_DIR = include
 
-test_frequency: tests/test_frequency.cpp
-	$(CXX) $(CXXFLAGS) $^ -o $@
+# Archivos fuente y cabeceras
+SOURCES = $(SRC_DIR)/experimentos.cpp
+HEADERS = $(INC_DIR)/trie.hpp
 
-test_extra: tests/test_extra.cpp
-	$(CXX) $(CXXFLAGS) $^ -o $@
+# Regla principal
+all: $(TARGET)
 
+$(TARGET): $(SOURCES) $(HEADERS)
+	$(CXX) $(CXXFLAGS) $(SOURCES) -o $(TARGET)
+
+# Ejecutar experimentos
+run: $(TARGET)
+	./$(TARGET)
+
+# Limpiar binarios y resultados
 clean:
-	rm -f test_recent test_frequency
+	rm -f $(TARGET) out/*.csv *.csv
+
+# Limpiar solo resultados (sin borrar binario)
+clean-results:
+	rm -f out/*.csv *.csv
+
+.PHONY: all run clean clean-results

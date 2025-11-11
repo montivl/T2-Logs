@@ -39,3 +39,9 @@
 
 # debug information files
 *.dwo
+
+test_extra
+test_frequency
+test_recent
+experimentos
+
